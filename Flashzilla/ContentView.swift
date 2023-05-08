@@ -17,9 +17,10 @@ extension View{
 
 struct ContentView: View {
     
-    @State private var cards = [Card](repeating: Card.example, count: 10)
+    @State private var cards = [Card]()
     
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
+    @Environment(\.accessibilityVoiceOverEnabled) var voiceOverEnabled
     
     
     @State private var timeRemaining = 100
@@ -30,9 +31,12 @@ struct ContentView: View {
     @State private var isActive = true
     
     
+    
+    @State private var showingEditScreen = false
+    
     var body: some View {
         ZStack{
-            Image("background")
+            Image(decorative: "background")
                 .resizable()
                 .ignoresSafeArea()
             VStack{
@@ -53,6 +57,8 @@ struct ContentView: View {
                             }
                         }
                             .stacked(at: index, in: cards.count)
+                            .allowsHitTesting(index == cards.count - 1)
+                            .accessibilityHidden(index < cards.count - 1)
                         
                     }
                 }
@@ -69,19 +75,56 @@ struct ContentView: View {
                 
             }
             
-            if differentiateWithoutColor{
+            VStack{
+                HStack{
+                    Spacer()
+                    
+                    Button{
+                        showingEditScreen = true
+                    }label: {
+                        Image(systemName: "plus.circle")
+                            .padding()
+                            .background(.black.opacity(0.7))
+                            .clipShape(Circle())
+                    }
+                }
+                Spacer()
+            }
+            .foregroundColor(.white)
+            .font(.largeTitle)
+            .padding()
+            
+            
+            
+            
+            if differentiateWithoutColor || voiceOverEnabled{
                 VStack{
                     Spacer()
                     HStack{
-                        Image(systemName: "xmark.circle")
-                            .padding()
-                            .background(.black.opacity(0.75))
-                            .clipShape(Circle())
+                        Button{
+                            removeCard(at: cards.count - 1)
+                        }label: {
+                            Image(systemName: "xmark.circle")
+                                .padding()
+                                .background(.black.opacity(0.75))
+                                .clipShape(Circle())
+                        }
+                        .accessibilityLabel("wrong")
+                        .accessibilityHint("mark your ans being incorrect")
+                        
+                        
                         Spacer()
-                        Image(systemName: "checkmark.circle")
-                            .padding()
-                            .background(.black.opacity(0.75))
-                            .clipShape(Circle())
+                        
+                        Button{
+                            removeCard(at: cards.count - 1)
+                        }label: {
+                            Image(systemName: "checkmark.circle")
+                                .padding()
+                                .background(.black.opacity(0.75))
+                                .clipShape(Circle())
+                        }
+                        .accessibilityLabel("correct")
+                        .accessibilityHint("mark your ans being correct")
                     }
                     .foregroundColor(.white)
                     .font(.largeTitle)
@@ -106,10 +149,17 @@ struct ContentView: View {
                 isActive = false
             }
         }
+        
+        .sheet(isPresented: $showingEditScreen, onDismiss: resetCards){
+            EditCards()
+        }
+        .onAppear(perform: resetCards)
     }
     
     
     func removeCard(at index: Int){
+        guard index >= 0 else {return}
+        
         cards.remove(at: index)
         
         if cards.isEmpty{
@@ -119,9 +169,16 @@ struct ContentView: View {
     }
     
     func resetCards(){
-        cards = [Card](repeating: Card.example, count: 10)
         timeRemaining = 100
         isActive = true
+        loadData()
+    }
+    func loadData() {
+        if let data = UserDefaults.standard.data(forKey: "Cards") {
+            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
+                cards = decoded
+            }
+        }
     }
     
 }

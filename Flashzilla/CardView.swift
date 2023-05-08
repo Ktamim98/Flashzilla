@@ -18,6 +18,10 @@ struct CardView: View {
     
     
     @Environment(\.accessibilityDifferentiateWithoutColor) var differentiateWithoutColor
+    @Environment(\.accessibilityVoiceOverEnabled) var voiceOverEnabled
+    
+    
+    @State private var feedBack = UINotificationFeedbackGenerator()
     
     var body: some View {
         ZStack{
@@ -33,15 +37,22 @@ struct CardView: View {
                 .shadow(radius: 10)
             
             VStack{
-                Text(card.prompt)
-                    .font(.largeTitle)
-                    .foregroundColor(.black)
+                if voiceOverEnabled{
+                    Text(isShowingAns ? card.answer : card.prompt)
+                        .font(.largeTitle)
+                        .foregroundColor(.black)
                 
-                if isShowingAns{
-                    Text(card.answer)
-                        .font(.title)
-                        .foregroundColor(.gray)
+                }else{
+                    Text(card.prompt)
+                        .font(.largeTitle)
+                        .foregroundColor(.black)
                     
+                    if isShowingAns{
+                        Text(card.answer)
+                            .font(.title)
+                            .foregroundColor(.gray)
+                        
+                    }
                 }
                 
             }
@@ -54,14 +65,23 @@ struct CardView: View {
         .rotationEffect(.degrees(Double(offset.width / 5)))
         .offset(x: offset.width * 5, y: 0)
         .opacity(2 - Double(abs(offset.width / 50)))
+        .accessibilityAddTraits(.isButton)
         .gesture(
             DragGesture()
                 .onChanged{ gesture in
                     offset = gesture.translation
+                    feedBack.prepare()
                     
                 }
                 .onEnded{ _ in
                     if abs(offset.width) > 100{
+                        
+                        if offset.width > 0{
+                            feedBack.notificationOccurred(.success)
+                        }else{
+                            feedBack.notificationOccurred(.error)
+                        }
+                        
                         removel?()
                     }else{
                         offset = .zero
@@ -75,6 +95,7 @@ struct CardView: View {
         .onTapGesture {
             isShowingAns.toggle()
         }
+        .animation(.spring(), value: offset)
     }
 }
 
