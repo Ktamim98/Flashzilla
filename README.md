@@ -1,6 +1,8 @@
 # Flashzilla
 Flashzilla App is an iOS application built using the SwiftUI framework. It is a tool to help users memorize information using digital flashcards. Users can create and edit their own flashcards, and then test themselves on the content. The app has support for voiceover and differentiation without color for accessibility, haptic feedback for better user experience, and animations to make the app more visually appealing.
 
+https://github.com/Ktamim98/Flashzilla/assets/124142522/0beff865-91ec-4cfb-bc95-017a576115a0
+
 ## Features
 ### Creating and Editing Cards
 - Users can add new flashcards by entering a prompt and an answer.
